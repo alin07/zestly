@@ -1,6 +1,6 @@
 import express from 'express';
 import { ApolloServer } from '@apollo/server';
-import { expressMiddleware } from '@apollo/server/express4';
+import { expressMiddleware } from '@as-integrations/express5';
 import { ApolloServerPluginDrainHttpServer } from '@apollo/server/plugin/drainHttpServer';
 import http from 'http';
 import cors from 'cors';
@@ -8,10 +8,10 @@ import morgan from 'morgan';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
 
-import { typeDefs } from '@/schema/typeDefs';
-import { resolvers } from '@/resolvers';
-import { createContext } from '@/utils/context';
-import { pool, closePool } from '@/database/config';
+import { typeDefs } from './schema/typeDefs';
+import { resolvers } from './resolvers';
+import { createContext, authenticateToken } from './middleware/auth';
+import { pool, closePool } from './database/config';
 
 // Load environment variables
 dotenv.config();
@@ -40,12 +40,13 @@ async function startServer() {
     resolvers,
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer })],
     introspection: process.env.NODE_ENV !== 'production',
-    formatError: (error) => {
+    formatError: (formattedError, error) => {
       console.error('GraphQL Error:', error);
       return {
-        message: error.message,
-        code: error.extensions?.code,
-        path: error.path,
+        ...formattedError,
+        message: formattedError.message,
+        code: formattedError.extensions?.code,
+        path: formattedError.path || [],
       };
     },
   });
@@ -63,13 +64,14 @@ async function startServer() {
       credentials: true,
     }),
     express.json({ limit: '50mb' }),
-    expressMiddleware(server, {
+    authenticateToken,
+    (expressMiddleware as any)(server, {
       context: createContext,
     })
   );
 
   // Health check endpoint
-  app.get('/health', (req, res) => {
+  app.get('/health', (_req, res) => {
     res.status(200).json({
       status: 'OK',
       timestamp: new Date().toISOString(),
@@ -78,7 +80,7 @@ async function startServer() {
   });
 
   // Test database connection
-  app.get('/db-health', async (req, res) => {
+  app.get('/db-health', async (_req, res) => {
     try {
       await pool.query('SELECT 1');
       res.status(200).json({ status: 'Database connected' });

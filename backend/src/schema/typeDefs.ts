@@ -71,7 +71,7 @@ export const typeDefs = gql`
 
   type Property {
     id: ID!
-    address: Address!
+    address: Address
     propertyType: PropertyType!
     bedrooms: Int
     bathrooms: Float
@@ -305,6 +305,12 @@ export const typeDefs = gql`
     password: String!
   }
 
+  input UpdateProfileInput {
+    firstName: String
+    lastName: String
+    phone: String
+  }
+
   type Query {
     # Auth queries
     me: User
@@ -370,5 +376,8 @@ export const typeDefs = gql`
 
     # Analytics mutations
     recordListingView(listingId: ID!, sessionId: String): Boolean!
+
+    # User mutations
+    updateProfile(input: UpdateProfileInput!): User!
   }
 `;
