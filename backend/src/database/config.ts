@@ -41,6 +41,23 @@ export const query = async (text: string, params?: any[]) => {
 // Helper function to get a client for transactions
 export const getClient = () => pool.connect();
 
+// Transaction helper function
+export const withTransaction = async <T>(callback: (client: any) => Promise<T>): Promise<T> => {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const result = await callback(client);
+    await client.query('COMMIT');
+    return result;
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Transaction rolled back due to error:', error);
+    throw error;
+  } finally {
+    client.release();
+  }
+};
+
 // Graceful shutdown
 export const closePool = async () => {
   await pool.end();
