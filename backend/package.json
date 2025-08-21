@@ -8,6 +8,9 @@
     "start": "node dist/index.js",
     "db:setup": "ts-node -r tsconfig-paths/register src/scripts/setupDatabase.ts",
     "db:seed": "ts-node -r tsconfig-paths/register src/scripts/seedDatabase.ts",
+    "db:cleanup": "ts-node -r tsconfig-paths/register src/scripts/cleanupOrphanedData.ts",
+    "db:delete-no-zip": "ts-node -r tsconfig-paths/register src/scripts/deletePropertiesWithoutZipCodes.ts",
+    "db:geocode": "ts-node -r tsconfig-paths/register src/scripts/geocodeExistingAddresses.ts",
     "type-check": "tsc --noEmit",
     "lint": "echo 'Add ESLint later'",
     "test": "echo 'Add tests later'"

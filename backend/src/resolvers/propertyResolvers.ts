@@ -1,5 +1,6 @@
 import { PropertyModel, AddressModel } from '../models';
 import { GraphQLContext } from '../types';
+import { GeocodingService } from '../services/geocodingService';
 
 export const propertyResolvers = {
   Query: {
@@ -22,6 +23,36 @@ export const propertyResolvers = {
         throw new Error('Only agents can create addresses');
       }
 
+      let latitude = input.latitude;
+      let longitude = input.longitude;
+
+      // If coordinates not provided, try to geocode the address
+      if (!latitude || !longitude) {
+        console.log('Geocoding address:', { 
+          street: input.street, 
+          city: input.city, 
+          state: input.state, 
+          zipCode: input.zipCode 
+        });
+        
+        const geocodeResult = await GeocodingService.geocodeAddress(
+          input.street,
+          input.unit,
+          input.city,
+          input.state,
+          input.zipCode,
+          input.country || 'USA'
+        );
+
+        if (geocodeResult) {
+          latitude = geocodeResult.latitude;
+          longitude = geocodeResult.longitude;
+          console.log('Geocoding successful:', geocodeResult);
+        } else {
+          console.warn('Geocoding failed for address, creating without coordinates');
+        }
+      }
+
       return await AddressModel.create({
         street: input.street,
         unit: input.unit,
@@ -29,8 +60,8 @@ export const propertyResolvers = {
         state: input.state,
         zip_code: input.zipCode,
         country: input.country,
-        latitude: input.latitude,
-        longitude: input.longitude
+        latitude,
+        longitude
       });
     },
 
@@ -57,6 +88,13 @@ export const propertyResolvers = {
         throw new Error('Only agents can create properties');
       }
 
+      if (!input.propertyType) {
+        console.error('PropertyType is missing from input:', JSON.stringify(input, null, 2));
+        throw new Error('Property type is required');
+      }
+
+      console.log('Creating property with type:', input.propertyType);
+
       return await PropertyModel.create({
         address_id: parseInt(input.addressId),
         property_type: input.propertyType.toLowerCase(),
@@ -82,7 +120,12 @@ export const propertyResolvers = {
 
       const updates: any = {};
       if (input.addressId !== undefined) updates.address_id = parseInt(input.addressId);
-      if (input.propertyType !== undefined) updates.property_type = input.propertyType.toLowerCase();
+      if (input.propertyType !== undefined) {
+        if (!input.propertyType) {
+          throw new Error('Property type cannot be empty');
+        }
+        updates.property_type = input.propertyType.toLowerCase();
+      }
       if (input.bedrooms !== undefined) updates.bedrooms = input.bedrooms;
       if (input.bathrooms !== undefined) updates.bathrooms = input.bathrooms;
       if (input.sqft !== undefined) updates.sqft = input.sqft;
@@ -128,7 +171,7 @@ export const propertyResolvers = {
 
   Property: {
     // Convert database fields to GraphQL schema fields
-    propertyType: (parent: any) => parent.property_type?.toUpperCase(),
+    propertyType: (parent: any) => parent.property_type?.toUpperCase() || 'HOUSE',
     sqft: (parent: any) => parent.sqft,
     lotSizeSqft: (parent: any) => parent.lot_size_sqft,
     yearBuilt: (parent: any) => parent.year_built,
@@ -151,9 +194,7 @@ export const propertyResolvers = {
           zipCode: parent.zip_code,
           country: parent.country,
           latitude: parent.latitude,
-          longitude: parent.longitude,
-          createdAt: parent.created_at,
-          updatedAt: parent.updated_at
+          longitude: parent.longitude
         };
       }
       return null;

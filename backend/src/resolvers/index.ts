@@ -25,7 +25,7 @@ const rootResolvers = {
   },
 
   ListingStatus: {
-    isActive: (parent: any) => parent.is_active,
+    isActive: (parent: any) => parent.is_active !== undefined ? parent.is_active : true,
     createdAt: (parent: any) => parent.created_at,
     updatedAt: (parent: any) => parent.updated_at,
   },

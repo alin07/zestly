@@ -17,7 +17,7 @@ export const typeDefs = gql`
     unit: String
     city: String!
     state: String!
-    zipCode: String!
+    zipCode: String
     country: String!
     latitude: Float
     longitude: Float
@@ -245,7 +245,7 @@ export const typeDefs = gql`
   }
 
   input PropertyInput {
-    addressId: ID!
+    addressId: ID
     propertyType: PropertyType!
     bedrooms: Int
     bathrooms: Float
@@ -264,6 +264,17 @@ export const typeDefs = gql`
   input ListingInput {
     propertyId: ID!
     agentId: ID!
+    listingTypeId: ID!
+    price: Int!
+    pricePerSqft: Float
+    virtualTourUrl: String
+    showingInstructions: String
+    privateRemarks: String
+  }
+
+  input CreateListingInput {
+    address: AddressInput!
+    property: PropertyInput!
     listingTypeId: ID!
     price: Int!
     pricePerSqft: Float
@@ -351,6 +362,7 @@ export const typeDefs = gql`
 
     # Listing mutations
     createListing(input: ListingInput!): Listing!
+    createCompleteListing(input: CreateListingInput!): Listing!
     updateListing(id: ID!, input: ListingInput!): Listing!
     deleteListing(id: ID!): Boolean!
     updateListingStatus(id: ID!, statusId: ID!): Listing!

@@ -15,7 +15,7 @@ VALUES ('agent'),
     ('buyer'),
     ('admin');
 
--- Listing statuses table
+
 CREATE TABLE listing_statuses (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE listing_statuses (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Insert default listing statuses
+
 INSERT INTO
     listing_statuses (name, description, is_active)
 VALUES (
@@ -59,7 +59,7 @@ VALUES (
         FALSE
     );
 
--- Listing types table
+
 CREATE TABLE listing_types (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL,
@@ -68,7 +68,7 @@ CREATE TABLE listing_types (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Insert default listing types
+
 INSERT INTO
     listing_types (name, description)
 VALUES (
@@ -80,7 +80,7 @@ VALUES (
         'Property is for rent/lease'
     );
 
--- Addresses table
+
 CREATE TABLE addresses (
     id SERIAL PRIMARY KEY,
     street VARCHAR(255) NOT NULL,
@@ -95,12 +95,11 @@ CREATE TABLE addresses (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Users table (agents, buyers, admins)
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    password_salt VARCHAR(255) NOT NULL, -- Salt for bcrypt (though bcrypt includes salt in hash)
+    password_salt VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
     phone VARCHAR(20),
@@ -114,7 +113,6 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Agencies table
 CREATE TABLE agencies (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
@@ -130,7 +128,6 @@ CREATE TABLE agencies (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Social links table (replaces JSONB)
 CREATE TABLE social_links (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
@@ -155,7 +152,6 @@ CREATE TABLE agent_profiles (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Properties table
 CREATE TABLE properties (
     id SERIAL PRIMARY KEY,
     address_id INTEGER NOT NULL REFERENCES addresses(id),
@@ -176,7 +172,7 @@ CREATE TABLE properties (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Listings table (properties can have multiple listings over time)
+
 CREATE TABLE listings (
     id SERIAL PRIMARY KEY,
     property_id INTEGER NOT NULL REFERENCES properties (id),
@@ -192,7 +188,6 @@ CREATE TABLE listings (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Open houses table (replaces JSONB)
 CREATE TABLE open_houses (
     id SERIAL PRIMARY KEY,
     listing_id INTEGER NOT NULL REFERENCES listings (id) ON DELETE CASCADE,
@@ -205,12 +200,11 @@ CREATE TABLE open_houses (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Property images
 CREATE TABLE property_images (
     id SERIAL PRIMARY KEY,
     property_id INTEGER NOT NULL REFERENCES properties (id) ON DELETE CASCADE,
-    s3_bucket VARCHAR(255) NOT NULL, -- AWS S3 bucket name
-    s3_key VARCHAR(500) NOT NULL, -- S3 object key/path
+    s3_bucket VARCHAR(255) NOT NULL,
+    s3_key VARCHAR(500) NOT NULL,
     original_filename VARCHAR(255),
     file_size INTEGER, -- Size in bytes
     mime_type VARCHAR(100),
@@ -231,7 +225,6 @@ CREATE TABLE user_favorites (
     PRIMARY KEY (user_id, listing_id)
 );
 
--- Saved searches
 CREATE TABLE saved_searches (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users (id) ON DELETE CASCADE,
@@ -249,7 +242,6 @@ CREATE TABLE saved_searches (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Search criteria table (replaces JSONB)
 CREATE TABLE search_criteria (
     id SERIAL PRIMARY KEY,
     saved_search_id INTEGER NOT NULL REFERENCES saved_searches(id) ON DELETE CASCADE,
@@ -262,22 +254,21 @@ CREATE TABLE search_criteria (
     min_sqft INTEGER,
     max_sqft INTEGER,
     property_types TEXT[], -- ['house', 'condo']
-    listing_type_ids INTEGER[], -- Reference to listing_types table
+    listing_type_ids INTEGER[], 
     min_year_built INTEGER,
     max_days_on_market INTEGER,
-    search_radius DECIMAL(5,2), -- Miles
+    search_radius DECIMAL(5,2), 
     center_latitude DECIMAL(10, 8),
     center_longitude DECIMAL(11, 8),
     city VARCHAR(100),
     state VARCHAR(50),
-    zip_codes TEXT[], -- ['94102', '94103']
-    required_features TEXT[], -- Features that must be present
-    status_ids INTEGER[], -- Reference to listing_statuses table
+    zip_codes TEXT[], 
+    required_features TEXT[],
+    status_ids INTEGER[], 
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Inquiries/Leads
 CREATE TABLE inquiries (
     id SERIAL PRIMARY KEY,
     listing_id INTEGER REFERENCES listings (id),
@@ -304,7 +295,6 @@ CREATE TABLE inquiries (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Listing views/analytics
 CREATE TABLE listing_views (
     id SERIAL PRIMARY KEY,
     listing_id INTEGER NOT NULL REFERENCES listings (id) ON DELETE CASCADE,

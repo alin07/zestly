@@ -105,6 +105,35 @@ export class PropertyModel {
     return result.rows[0];
   }
 
+  // Transactional version for use within transactions
+  static async createWithClient(client: any, propertyData: CreatePropertyInput): Promise<Property> {
+    const result = await client.query(`
+      INSERT INTO properties (
+        address_id, property_type, bedrooms, bathrooms, sqft, lot_size_sqft,
+        year_built, parking_spaces, features, description, hoa_fee,
+        property_tax_annual, zoning, mls_number
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+      RETURNING *
+    `, [
+      propertyData.address_id,
+      propertyData.property_type,
+      propertyData.bedrooms,
+      propertyData.bathrooms,
+      propertyData.sqft,
+      propertyData.lot_size_sqft,
+      propertyData.year_built,
+      propertyData.parking_spaces,
+      propertyData.features,
+      propertyData.description,
+      propertyData.hoa_fee,
+      propertyData.property_tax_annual,
+      propertyData.zoning,
+      propertyData.mls_number
+    ]);
+    return result.rows[0];
+  }
+
   static async update(id: number, updates: Partial<CreatePropertyInput>): Promise<Property> {
     const fields = Object.keys(updates);
     const values = fields.map(field => updates[field as keyof CreatePropertyInput]);

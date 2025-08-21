@@ -40,7 +40,14 @@ export const authResolvers = {
       if (!user) {
         throw new Error('Not authenticated');
       }
-      return user;
+      
+      // Get the full user object from database instead of the partial one from middleware
+      const fullUser = await UserModel.findById(user.id);
+      if (!fullUser) {
+        throw new Error('User not found');
+      }
+      
+      return fullUser;
     },
   },
 
@@ -86,18 +93,7 @@ export const authResolvers = {
 
         return {
           token,
-          user: {
-            id: user.id,
-            email: user.email,
-            firstName: user.first_name,
-            lastName: user.last_name,
-            phone: user.phone,
-            isVerified: user.is_verified,
-            isActive: user.is_active,
-            createdAt: user.created_at,
-            updatedAt: user.updated_at,
-            role: role
-          },
+          user: user  // Let the User type resolvers handle field mapping
         };
       } catch (error) {
         console.error('Registration error:', error);
@@ -132,28 +128,12 @@ export const authResolvers = {
         // Update last login
         await UserModel.updateLastLogin(user.id);
 
-        // Get user role
-        const roles = await ReferenceDataModel.getRoles();
-        const role = roles.find(r => r.id === user.role_id);
-
         // Generate token
         const token = generateToken(user);
 
         return {
           token,
-          user: {
-            id: user.id,
-            email: user.email,
-            firstName: user.first_name,
-            lastName: user.last_name,
-            phone: user.phone,
-            isVerified: user.is_verified,
-            isActive: user.is_active,
-            lastLoginAt: user.last_login_at,
-            createdAt: user.created_at,
-            updatedAt: user.updated_at,
-            role: role
-          },
+          user: user  // Let the User type resolvers handle field mapping
         };
       } catch (error) {
         console.error('Login error:', error);
