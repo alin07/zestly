@@ -333,3 +333,267 @@ export const GET_LISTING_TYPES = gql`
     }
   }
 `;
+
+export const CREATE_ADDRESS = gql`
+  mutation CreateAddress($input: AddressInput!) {
+    createAddress(input: $input) {
+      id
+      street
+      unit
+      city
+      state
+      zipCode
+      country
+      latitude
+      longitude
+    }
+  }
+`;
+
+export const CREATE_PROPERTY = gql`
+  mutation CreateProperty($input: PropertyInput!) {
+    createProperty(input: $input) {
+      id
+      propertyType
+      bedrooms
+      bathrooms
+      sqft
+      lotSizeSqft
+      yearBuilt
+      parkingSpaces
+      features
+      description
+      hoaFee
+      propertyTaxAnnual
+      zoning
+      mlsNumber
+      address {
+        id
+        street
+        unit
+        city
+        state
+        zipCode
+        country
+        latitude
+        longitude
+      }
+    }
+  }
+`;
+
+export const CREATE_COMPLETE_LISTING = gql`
+  mutation CreateCompleteListing($input: CreateListingInput!) {
+    createCompleteListing(input: $input) {
+      id
+      price
+      pricePerSqft
+      virtualTourUrl
+      showingInstructions
+      privateRemarks
+      views
+      createdAt
+      updatedAt
+      property {
+        id
+        propertyType
+        bedrooms
+        bathrooms
+        sqft
+        lotSizeSqft
+        yearBuilt
+        parkingSpaces
+        features
+        description
+        hoaFee
+        propertyTaxAnnual
+        zoning
+        mlsNumber
+        address {
+          id
+          street
+          unit
+          city
+          state
+          zipCode
+          country
+          latitude
+          longitude
+        }
+      }
+      agent {
+        id
+        firstName
+        lastName
+        email
+      }
+      status {
+        id
+        name
+        description
+      }
+      listingType {
+        id
+        name
+        description
+      }
+    }
+  }
+`;
+
+export const UPDATE_LISTING = gql`
+  mutation UpdateListing($id: ID!, $input: ListingInput!) {
+    updateListing(id: $id, input: $input) {
+      id
+      price
+      pricePerSqft
+      virtualTourUrl
+      showingInstructions
+      privateRemarks
+      views
+      createdAt
+      updatedAt
+      property {
+        id
+        propertyType
+        bedrooms
+        bathrooms
+        sqft
+        lotSizeSqft
+        yearBuilt
+        parkingSpaces
+        features
+        description
+        hoaFee
+        propertyTaxAnnual
+        zoning
+        mlsNumber
+        address {
+          id
+          street
+          unit
+          city
+          state
+          zipCode
+          country
+          latitude
+          longitude
+        }
+      }
+      agent {
+        id
+        firstName
+        lastName
+        email
+      }
+      status {
+        id
+        name
+        description
+      }
+      listingType {
+        id
+        name
+        description
+      }
+    }
+  }
+`;
+
+export const UPDATE_PROPERTY = gql`
+  mutation UpdateProperty($id: ID!, $input: PropertyInput!) {
+    updateProperty(id: $id, input: $input) {
+      id
+      propertyType
+      bedrooms
+      bathrooms
+      sqft
+      lotSizeSqft
+      yearBuilt
+      parkingSpaces
+      features
+      description
+      hoaFee
+      propertyTaxAnnual
+      zoning
+      mlsNumber
+      address {
+        id
+        street
+        unit
+        city
+        state
+        zipCode
+        country
+        latitude
+        longitude
+      }
+    }
+  }
+`;
+
+export const UPDATE_ADDRESS = gql`
+  mutation UpdateAddress($id: ID!, $input: AddressInput!) {
+    updateAddress(id: $id, input: $input) {
+      id
+      street
+      unit
+      city
+      state
+      zipCode
+      country
+      latitude
+      longitude
+    }
+  }
+`;
+
+export const GET_AGENT_LISTINGS = gql`
+  query GetAgentListings($limit: Int, $offset: Int) {
+    listings(limit: $limit, offset: $offset) {
+      id
+      price
+      pricePerSqft
+      virtualTourUrl
+      showingInstructions
+      privateRemarks
+      views
+      createdAt
+      updatedAt
+      property {
+        id
+        propertyType
+        bedrooms
+        bathrooms
+        sqft
+        description
+        address {
+          id
+          street
+          unit
+          city
+          state
+          zipCode
+        }
+        images {
+          id
+          url
+          caption
+          isPrimary
+          imageType
+        }
+      }
+      status {
+        id
+        name
+        description
+        isActive
+      }
+      listingType {
+        id
+        name
+        description
+      }
+    }
+  }
+`;

@@ -15,11 +15,31 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     { name: 'Home', href: '/', icon: HomeIcon },
     { name: 'Listings', href: '/listings', icon: BuildingOfficeIcon },
     { name: 'Search', href: '/listings?search=true', icon: MagnifyingGlassIcon },
+    ...(isAuthenticated ? [{ name: 'Dashboard', href: '/dashboard', icon: UserIcon }] : []),
   ];
 
   const isActivePath = (path: string) => {
+    // Handle home page exactly
     if (path === '/' && location.pathname === '/') return true;
-    if (path !== '/' && location.pathname.startsWith(path)) return true;
+    
+    // Handle listings vs search distinction more precisely
+    if (path === '/listings') {
+      // Only match if we're on /listings without search params
+      const result = location.pathname === '/listings' && !location.search;
+      return result;
+    }
+    
+    if (path === '/listings?search=true') {
+      // Only match if we're on /listings with search=true
+      const result = location.pathname === '/listings' && location.search.includes('search=true');
+      return result;
+    }
+    
+    // For other paths, exact match
+    if (path !== '/') {
+      return location.pathname === path;
+    }
+    
     return false;
   };
 
@@ -32,7 +52,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             {/* Logo */}
             <Link to="/" className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
-                <span className="text-2xl font-bold text-primary-600">Zestly</span>
+                <span className="text-2xl font-bold text-blue-600">Zestly</span>
               </div>
             </Link>
 
@@ -43,8 +63,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   key={item.name}
                   to={item.href}
                   className={`inline-flex items-center px-1 pt-1 text-sm font-medium transition-colors ${
-                    isActivePath(item.href.split('?')[0])
-                      ? 'text-primary-600 border-b-2 border-primary-600'
+                    isActivePath(item.href)
+                      ? 'text-blue-600 border-b-2 border-blue-600'
                       : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
@@ -58,17 +78,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             <div className="flex items-center space-x-4">
               {isAuthenticated ? (
                 <div className="flex items-center space-x-4">
-                  <span className="text-sm text-gray-700">
+                  <span className="text-sm text-gray-700 hidden sm:block">
                     Welcome, {user?.firstName}!
+                    {user?.role?.name === 'agent' && (
+                      <span className="ml-1 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">
+                        Agent
+                      </span>
+                    )}
                   </span>
-                  {user?.role?.name === 'agent' && (
-                    <Link
-                      to="/dashboard"
-                      className="bg-primary-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-primary-700 transition-colors"
-                    >
-                      Dashboard
-                    </Link>
-                  )}
                   <button
                     onClick={logout}
                     className="text-gray-500 hover:text-gray-700 p-1"
@@ -78,19 +95,49 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   </button>
                 </div>
               ) : (
-                <div className="flex items-center space-x-4">
-                  <Link
-                    to="/login"
-                    className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Sign in
-                  </Link>
-                  <Link
-                    to="/register"
-                    className="bg-primary-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-primary-700 transition-colors"
-                  >
-                    Sign up
-                  </Link>
+                <div className="flex items-center space-x-2">
+                  <div className="relative group">
+                    <button className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium">
+                      Sign in
+                    </button>
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                      <div className="py-1">
+                        <Link
+                          to="/login"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Sign in as Buyer
+                        </Link>
+                        <Link
+                          to="/agent/login"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Sign in as Agent
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="relative group">
+                    <button className="bg-blue-600 text-white px-3 py-2 rounded-md text-sm font-medium hover:bg-blue-700 transition-colors">
+                      Sign up
+                    </button>
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10">
+                      <div className="py-1">
+                        <Link
+                          to="/register"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Sign up as Buyer
+                        </Link>
+                        <Link
+                          to="/agent/register"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          Sign up as Agent
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
@@ -105,8 +152,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 key={item.name}
                 to={item.href}
                 className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                  isActivePath(item.href.split('?')[0])
-                    ? 'text-primary-600 bg-primary-50'
+                  isActivePath(item.href)
+                    ? 'text-blue-600 bg-blue-50'
                     : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
                 }`}
               >
@@ -131,7 +178,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="col-span-1 md:col-span-2">
               <Link to="/" className="flex items-center mb-4">
-                <span className="text-xl font-bold text-primary-600">Zestly</span>
+                <span className="text-xl font-bold text-blue-600">Zestly</span>
               </Link>
               <p className="text-gray-600 text-sm">
                 Your premier destination for real estate listings. Find your dream home with ease.

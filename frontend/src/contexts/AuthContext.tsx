@@ -6,7 +6,7 @@ import { User, LoginInput, RegisterInput, AuthPayload } from '../types';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (input: LoginInput) => Promise<AuthPayload>;
+  login: (input: LoginInput, rememberMe?: boolean) => Promise<AuthPayload>;
   register: (input: RegisterInput) => Promise<AuthPayload>;
   logout: () => void;
   isAuthenticated: boolean;
@@ -27,11 +27,18 @@ interface AuthProviderProps {
   children: ReactNode;
 }
 
+// Helper function to get token from either storage
+const getStoredToken = (): string | null => {
+  return localStorage.getItem('token') || sessionStorage.getItem('token');
+};
+
 const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const { data, loading: queryLoading, error } = useQuery(GET_ME, {
-    skip: !localStorage.getItem('token'),
+    skip: !getStoredToken(),
     errorPolicy: 'all',
+    notifyOnNetworkStatusChange: true,
+    fetchPolicy: 'cache-and-network',
   });
 
   const [loginMutation, { loading: loginLoading }] = useMutation(LOGIN);
@@ -40,21 +47,44 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const loading = queryLoading || loginLoading || registerLoading;
 
   useEffect(() => {
+    const token = getStoredToken();
+    
     if (data?.me) {
       setUser(data.me);
-    } else if (error && !localStorage.getItem('token')) {
+    } else if (error && token) {
+      // Only clear user if there's a real authentication error
+      if (error.networkError && 'statusCode' in error.networkError && error.networkError.statusCode === 401) {
+        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
+        setUser(null);
+      } else if (error.graphQLErrors?.some(err => err.message.includes('Not authenticated'))) {
+        localStorage.removeItem('token');
+        sessionStorage.removeItem('token');
+        setUser(null);
+      }
+      // Don't clear user for other types of GraphQL errors (field validation, etc.)
+      // This keeps the user logged in during temporary issues
+    } else if (!token) {
       setUser(null);
     }
   }, [data, error]);
 
-  const login = async (input: LoginInput): Promise<AuthPayload> => {
+  const login = async (input: LoginInput, rememberMe: boolean = false): Promise<AuthPayload> => {
     try {
       const { data } = await loginMutation({
         variables: { input },
       });
 
       if (data?.login) {
-        localStorage.setItem('token', data.login.token);
+        // Store token in localStorage (or sessionStorage if not remembering)
+        if (rememberMe) {
+          localStorage.setItem('token', data.login.token);
+          localStorage.setItem('rememberMe', 'true');
+        } else {
+          sessionStorage.setItem('token', data.login.token);
+          localStorage.removeItem('rememberMe');
+        }
+        
         setUser(data.login.user);
         return data.login;
       }
@@ -87,6 +117,8 @@ const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('rememberMe');
+    sessionStorage.removeItem('token');
     setUser(null);
     window.location.href = '/';
   };

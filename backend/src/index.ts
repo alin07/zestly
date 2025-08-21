@@ -93,7 +93,7 @@ async function startServer() {
   const PORT = process.env.PORT || 4000;
 
   // Start HTTP server
-  httpServer.listen(PORT, () => {
+  httpServer.listen(Number(PORT), () => {
     console.log(`🚀 Server ready at http://localhost:${PORT}/graphql`);
     console.log(`📊 Health check at http://localhost:${PORT}/health`);
     console.log(`💾 Database health at http://localhost:${PORT}/db-health`);

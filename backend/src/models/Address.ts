@@ -49,6 +49,25 @@ export class AddressModel {
     return result.rows[0];
   }
 
+
+  static async createWithClient(client: any, addressData: CreateAddressInput): Promise<Address> {
+    const result = await client.query(`
+      INSERT INTO addresses (street, unit, city, state, zip_code, country, latitude, longitude)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+    `, [
+      addressData.street,
+      addressData.unit,
+      addressData.city,
+      addressData.state,
+      addressData.zip_code,
+      addressData.country || 'United States',
+      addressData.latitude,
+      addressData.longitude
+    ]);
+    return result.rows[0];
+  }
+
   static async update(id: number, updates: Partial<CreateAddressInput>): Promise<Address> {
     const fields = Object.keys(updates);
     const values = fields.map(field => updates[field as keyof CreateAddressInput]);
@@ -61,7 +80,7 @@ export class AddressModel {
     return result.rows[0];
   }
 
-  static async findByLocation(
+  static async findByCoordinates(
     latitude: number,
     longitude: number,
     radiusInMiles: number = 1

@@ -53,9 +53,9 @@ export class ListingModel {
         l.*,
         p.*,
         a.street, a.unit, a.city, a.state, a.zip_code, a.country, a.latitude, a.longitude,
-        u.first_name as agent_first_name, u.last_name as agent_last_name, u.email as agent_email,
-        ls.name as status_name, ls.description as status_description,
-        lt.name as listing_type_name, lt.description as listing_type_description
+        u.first_name as agent_first_name, u.last_name as agent_last_name, u.email as agent_email, u.role_id as agent_role_id, u.is_verified as agent_is_verified, u.is_active as agent_is_active, u.created_at as agent_created_at, u.updated_at as agent_updated_at,
+        ls.name as status_name, ls.description as status_description, ls.is_active as status_is_active, ls.created_at as status_created_at, ls.updated_at as status_updated_at,
+        lt.name as listing_type_name, lt.description as listing_type_description, lt.created_at as listing_type_created_at, lt.updated_at as listing_type_updated_at
       FROM listings l
       JOIN properties p ON l.property_id = p.id
       JOIN addresses a ON p.address_id = a.id
@@ -157,7 +157,7 @@ export class ListingModel {
         p.*,
         a.street, a.unit, a.city, a.state, a.zip_code, a.country, a.latitude, a.longitude,
         u.first_name as agent_first_name, u.last_name as agent_last_name, u.email as agent_email,
-        ls.name as status_name, ls.description as status_description,
+        ls.name as status_name, ls.description as status_description, ls.is_active as status_is_active,
         lt.name as listing_type_name, lt.description as listing_type_description,
         COUNT(lv.id) as view_count
       FROM listings l
@@ -178,6 +178,25 @@ export class ListingModel {
 
   static async create(listingData: CreateListingInput): Promise<Listing> {
     const result = await query(`
+      INSERT INTO listings (property_id, agent_id, listing_type_id, price, price_per_sqft, virtual_tour_url, showing_instructions, private_remarks)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *
+    `, [
+      listingData.property_id,
+      listingData.agent_id,
+      listingData.listing_type_id,
+      listingData.price,
+      listingData.price_per_sqft,
+      listingData.virtual_tour_url,
+      listingData.showing_instructions,
+      listingData.private_remarks
+    ]);
+    return result.rows[0];
+  }
+
+  // Transactional version for use within transactions
+  static async createWithClient(client: any, listingData: CreateListingInput): Promise<Listing> {
+    const result = await client.query(`
       INSERT INTO listings (property_id, agent_id, listing_type_id, price, price_per_sqft, virtual_tour_url, showing_instructions, private_remarks)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
@@ -225,7 +244,7 @@ export class ListingModel {
         l.*,
         p.*,
         a.street, a.unit, a.city, a.state, a.zip_code, a.country, a.latitude, a.longitude,
-        ls.name as status_name, ls.description as status_description,
+        ls.name as status_name, ls.description as status_description, ls.is_active as status_is_active,
         lt.name as listing_type_name, lt.description as listing_type_description
       FROM listings l
       JOIN properties p ON l.property_id = p.id
@@ -247,7 +266,7 @@ export class ListingModel {
         p.*,
         a.street, a.unit, a.city, a.state, a.zip_code, a.country, a.latitude, a.longitude,
         u.first_name as agent_first_name, u.last_name as agent_last_name,
-        ls.name as status_name, ls.description as status_description,
+        ls.name as status_name, ls.description as status_description, ls.is_active as status_is_active,
         lt.name as listing_type_name, lt.description as listing_type_description,
         COUNT(lv.id) as view_count
       FROM listings l

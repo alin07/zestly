@@ -7,7 +7,8 @@ const httpLink = createHttpLink({
 });
 
 const authLink = setContext((_, { headers }) => {
-  const token = localStorage.getItem('token');
+  // Get token from either localStorage (remember me) or sessionStorage (current session)
+  const token = localStorage.getItem('token') || sessionStorage.getItem('token');
   return {
     headers: {
       ...headers,
@@ -20,17 +21,24 @@ const errorLink = onError(({ graphQLErrors, networkError, operation, forward }) 
   if (graphQLErrors) {
     graphQLErrors.forEach(({ message, locations, path }) => {
       console.error(`GraphQL error: Message: ${message}, Location: ${locations}, Path: ${path}`);
+      
+      // Only redirect to login for authentication errors
+      if (message.includes('Not authenticated') || message.includes('Authentication required')) {
+        localStorage.removeItem('token');
+        window.location.href = '/login';
+      }
     });
   }
 
   if (networkError) {
     console.error(`Network error: ${networkError}`);
     
-    // Handle authentication errors
+    // Only handle 401 authentication errors, not general network failures
     if ('statusCode' in networkError && networkError.statusCode === 401) {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }
+    // Don't logout for network connectivity issues (fetch failures, timeouts, etc.)
   }
 });
 
